@@ -1,14 +1,14 @@
 #!/usr/bin/expect -f
 
 # Variables
-set hostip "host_ip"
+set remotehost "remote_host"
 set username "your_username"
 set local_file_path "/path/to/your/local/file.txt"
 set remote_file_path "/path/to/your/remote/file.txt"
 set password [lindex $argv 0]
 
 # Start SFTP session
-spawn sftp $username@$hostip
+spawn sftp $username@$remotehost
 
 # Handle the authenticity prompt
 expect {
