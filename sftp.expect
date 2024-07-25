@@ -1,0 +1,33 @@
+#!/usr/bin/expect -f
+
+# Variables
+set hostip "host_ip"
+set username "your_username"
+set local_file_path "/path/to/your/local/file.txt"
+set remote_file_path "/path/to/your/remote/file.txt"
+set password [lindex $argv 0]
+
+# Start SFTP session
+spawn sftp $username@$hostip
+
+# Handle the authenticity prompt
+expect {
+    "Are you sure you want to continue connecting (yes/no)?" {
+        send "yes\r"
+        exp_continue
+    }
+    "password:" {
+        send "$password\r"
+    }
+}
+
+# Upload the file
+expect "sftp>"
+send "put $local_file_path $remote_file_path\r"
+
+# Close the connection
+expect "sftp>"
+send "bye\r"
+
+# End script
+expect eof
