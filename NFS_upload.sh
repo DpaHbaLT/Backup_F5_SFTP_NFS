@@ -5,7 +5,7 @@ NFS_SERVER="your_nfs_server"
 NFS_PATH="/path/on/nfs"
 MOUNT_POINT="/mnt/nfs"
 LOCAL_FILE="path/to/local/file"
-UPLOAD_FILE_NAME="uploaded_file_name"
+UPLOAD_FILE_NAME=$(basename ${LOCAL_FILE})
 
 # Mount the NFS share
 sudo mount -t nfs ${NFS_SERVER}:${NFS_PATH} ${MOUNT_POINT}
