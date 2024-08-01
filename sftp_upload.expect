@@ -3,30 +3,39 @@
 # Variables
 set remotehost "remote_host"
 set username "your_username"
-set local_file_path "/path/to/your/local/file.txt"
-set remote_file_path "/path/to/your/remote/file.txt"
 set password [lindex $argv 0]
 set hostname [exec hostname]
 set ucs_filename "/var/local/ucs/${hostname}_backup_[exec date +%F_%H-%M-%S].ucs"
 
+# Extract the filename from the UCS path
+set ucs_filename_only [file tail $ucs_filename]
+
+# Set the remote file path to have the same filename
+set remote_file_path "/path/to/your/remote/$ucs_filename_only"
+
 # Log the start of the backup process
 exec logger -p local0.info "System backup started on $hostname"
 
-# Save the system configuration
-exec tmsh save sys config
-
-# Save the system UCS file
-exec tmsh save sys ucs $ucs_filename
-
-# Check if the UCS save was successful
-if {[lindex [exec echo $?] 0] != "0"} {
-    puts "Failed to save UCS file"
+# Indicate the start of system configuration save
+puts "Saving system configuration..."
+set config_output [exec tmsh save sys config]
+if {[regexp {error|fail} $config_output]} {
+    puts "Failed to save system configuration: $config_output"
     exit 1
 }
+puts "System configuration saved successfully."
 
-puts "Backup successful: $ucs_filename"
+# Indicate the start of UCS file save
+puts "Saving UCS file..."
+set ucs_output [exec tmsh save sys ucs $ucs_filename]
+if {[regexp {error|fail} $ucs_output]} {
+    puts "Failed to save UCS file: $ucs_output"
+    exit 1
+}
+puts "UCS file saved successfully: $ucs_filename"
 
 # Start SFTP session
+puts "Starting SFTP session..."
 spawn sftp $username@$remotehost
 
 # Handle the authenticity prompt
@@ -42,11 +51,15 @@ expect {
 
 # Upload the UCS file
 expect "sftp>"
+puts "Uploading UCS file to remote host..."
 send "put $ucs_filename $remote_file_path\r"
 
 # Close the connection
 expect "sftp>"
+puts "Upload complete. Closing SFTP connection..."
 send "bye\r"
 
 # End script
 expect eof
+
+puts "Backup process completed."
